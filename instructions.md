@@ -5,92 +5,76 @@
 ### 1. Development Environment Setup
 1. Initialize a new Vite project
    ```bash
-   npm create vite@latest cosmic-defender -- --template vanilla-ts
-   cd cosmic-defender
+   npm create vite@latest 3d-shooter-game -- --template vanilla
+   cd 3d-shooter-game
    npm install
    ```
 
 2. Install core dependencies
    ```bash
-   npm install three @types/three cannon-es gsap tweakpane
+   npm install three @types/three cannon-es gsap tweakpane stats.js three-stdlib
    ```
 
-3. Setup project structure
+3. Current project structure
    ```
    src/
-   ├── core/
-   │   ├── engine/
-   │   │   ├── Engine.ts
-   │   │   ├── Renderer.ts
-   │   │   └── Camera.ts
-   │   ├── physics/
-   │   │   ├── PhysicsWorld.ts
-   │   │   └── Collisions.ts
-   │   ├── input/
-   │   │   ├── InputManager.ts
-   │   │   ├── KeyboardInput.ts
-   │   │   ├── MouseInput.ts
-   │   │   └── TouchInput.ts
-   │   └── Time.ts
-   ├── game/
-   │   ├── entities/
+   ├── js/
+   │   ├── main.js
+   │   ├── components/
    │   │   ├── player/
-   │   │   │   ├── Player.ts
-   │   │   │   ├── Weapon.ts
-   │   │   │   └── Shield.ts
-   │   │   ├── enemies/
-   │   │   │   ├── BaseEnemy.ts
-   │   │   │   ├── Drone.ts
-   │   │   │   ├── Soldier.ts
-   │   │   │   ├── Elite.ts
-   │   │   │   └── Commander.ts
-   │   │   └── projectiles/
-   │   │       ├── Projectile.ts
-   │   │       └── ProjectilePool.ts
+   │   │   └── environment/
+   │   ├── controls/
+   │   │   ├── keyboard.js
+   │   │   ├── mouse.js
+   │   │   └── touch.js
+   │   ├── enemies/
+   │   │   ├── base/
+   │   │   ├── types/
+   │   │   └── formations/
+   │   ├── physics/
+   │   │   ├── world.js
+   │   │   └── collisions.js
+   │   ├── scenes/
+   │   │   ├── arena.js
+   │   │   └── variants/
    │   ├── systems/
-   │   │   ├── combat/
-   │   │   │   ├── DamageSystem.ts
-   │   │   │   └── ComboSystem.ts
-   │   │   ├── formation/
-   │   │   │   ├── FormationManager.ts
-   │   │   │   └── FormationPatterns.ts
    │   │   ├── wave/
-   │   │   │   ├── WaveManager.ts
-   │   │   │   └── WavePatterns.ts
-   │   │   └── scoring/
-   │   │       └── ScoreManager.ts
+   │   │   ├── score/
+   │   │   └── combat/
    │   ├── ui/
    │   │   ├── hud/
-   │   │   │   ├── HUDManager.ts
-   │   │   │   ├── HealthDisplay.ts
-   │   │   │   └── AmmoDisplay.ts
    │   │   ├── menus/
-   │   │   │   ├── MainMenu.ts
-   │   │   │   └── PauseMenu.ts
    │   │   └── effects/
-   │   │       ├── ScreenEffects.ts
-   │   │       └── Particles.ts
    │   ├── audio/
-   │   │   ├── AudioManager.ts
-   │   │   ├── SoundEffects.ts
-   │   │   └── MusicSystem.ts
-   │   └── Game.ts
-   ├── utils/
-   │   ├── MathUtils.ts
-   │   ├── PoolManager.ts
-   │   └── Debug.ts
-   ├── assets/
-   │   ├── models/
-   │   ├── textures/
-   │   ├── audio/
-   │   └── shaders/
-   ├── config/
-   │   ├── GameConfig.ts
-   │   ├── EnemyConfig.ts
-   │   └── WeaponConfig.ts
-   ├── types/
-   │   └── index.d.ts
-   └── main.ts
+   │   │   ├── manager.js
+   │   │   ├── effects.js
+   │   │   └── music.js
+   │   ├── utils/
+   │   │   ├── math.js
+   │   │   ├── pool.js
+   │   │   └── debug.js
+   │   ├── weapons/
+   │   │   ├── base.js
+   │   │   └── projectiles/
+   │   └── config/
+   │       ├── game.js
+   │       ├── enemies.js
+   │       └── weapons.js
+   └── assets/
+       ├── models/
+       │   ├── player/
+       │   ├── enemies/
+       │   ├── weapons/
+       │   └── environment/
+       ├── sounds/
+       │   ├── effects/
+       │   ├── music/
+       │   └── ui/
+       └── textures/
+           ├── environment/
+           ├── ui/
+           ├── weapons/
+           └── characters/
    ```
 
 ### 2. Core Engine Implementation
