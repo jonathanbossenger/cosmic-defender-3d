@@ -2,6 +2,10 @@
 
 A 3D first-person shooter game built with Three.js, Cannon.js for physics, and Vite for building.
 
+## Warning
+
+This project is very much a work in progress, so don't expect anything
+
 ## Features
 
 - First-person shooter controls
