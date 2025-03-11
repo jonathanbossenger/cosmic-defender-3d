@@ -3,6 +3,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 export class LoadingManager {
   constructor() {
+    console.log('LoadingManager constructor called');
+    
     // Create Three.js loading manager
     this.manager = new THREE.LoadingManager();
     
@@ -31,9 +33,8 @@ export class LoadingManager {
     this.totalItems = 0;
     this.loadedItems = 0;
     
-    // DOM elements
-    this.loadingScreen = document.getElementById('loading-screen');
-    this.loadingBarFill = document.getElementById('loading-bar-fill');
+    // Start loading assets in the background
+    this.startLoading();
   }
   
   handleStart(url, itemsLoaded, itemsTotal) {
@@ -50,8 +51,9 @@ export class LoadingManager {
     
     // Update loading bar
     const progress = (itemsLoaded / itemsTotal) * 100;
-    if (this.loadingBarFill) {
-      this.loadingBarFill.style.width = `${progress}%`;
+    const loadingBarFill = document.getElementById('loading-bar-fill');
+    if (loadingBarFill) {
+      loadingBarFill.style.width = `${progress}%`;
     }
     
     console.log(`Loading file: ${url}. Loaded ${itemsLoaded}/${itemsTotal} files.`);
@@ -61,14 +63,12 @@ export class LoadingManager {
     this.isLoading = false;
     console.log('Loading complete!');
     
-    // Hide loading screen
-    if (this.loadingScreen) {
-      this.loadingScreen.style.display = 'none';
-    }
-    
     // Call custom onLoad callback if defined
     if (typeof this.onLoadCallback === 'function') {
+      console.log('Calling onLoad callback');
       this.onLoadCallback();
+    } else {
+      console.warn('No onLoad callback defined');
     }
   }
   
@@ -77,13 +77,11 @@ export class LoadingManager {
   }
   
   startLoading() {
-    // Show loading screen
-    if (this.loadingScreen) {
-      this.loadingScreen.style.display = 'flex';
-    }
+    console.log('Starting loading process');
     
     // Simulate loading for testing
     setTimeout(() => {
+      console.log('Simulated loading complete, calling handleLoad');
       this.handleLoad();
     }, 1000);
   }

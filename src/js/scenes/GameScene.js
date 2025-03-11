@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { Water } from 'three/examples/jsm/objects/Water.js';
+import { Arena } from './arena.js';
 
 export class GameScene {
-  constructor(camera, loadingManager) {
+  constructor(camera, loadingManager, physics) {
     this.camera = camera;
     this.loadingManager = loadingManager;
+    this.physics = physics;
     
     // Create scene
     this.scene = new THREE.Scene();
@@ -20,6 +22,11 @@ export class GameScene {
     
     // Add objects
     this.setupObjects();
+    
+    // Create arena if physics is provided
+    if (this.physics) {
+      this.arena = new Arena(this.scene, this.loadingManager, this.physics);
+    }
   }
   
   setupLights() {
@@ -160,5 +167,10 @@ export class GameScene {
     // Animate target sphere
     this.targetSphere.position.y = 1 + Math.sin(Date.now() * 0.001) * 0.5;
     this.targetSphere.rotation.y += deltaTime;
+    
+    // Update arena if it exists
+    if (this.arena) {
+      this.arena.update(deltaTime);
+    }
   }
 } 
