@@ -167,8 +167,24 @@ export class Soldier extends Enemy {
    * Find cover position
    */
   findCover() {
-    // TODO: Implement cover finding logic
-    // For now, just move to a random position away from the player
+    // Check if arena has a cover system
+    const arena = this.scene.userData.arena;
+    if (arena && arena.coverSystem && this.target) {
+      // Use cover system to find cover position
+      const coverPosition = arena.coverSystem.findCoverPosition(
+        this.position,
+        this.target.position,
+        15 // Max distance to search
+      );
+      
+      if (coverPosition) {
+        this.coverPosition = coverPosition;
+        this.changeState('cover');
+        return;
+      }
+    }
+    
+    // Fallback: just move to a random position away from the player
     if (this.target) {
       const directionFromTarget = new THREE.Vector3()
         .subVectors(this.position, this.target.position)
@@ -357,6 +373,15 @@ export class Soldier extends Enemy {
     // If reached cover, switch to attack if target in range
     if (reachedCover) {
       this.isBehindCover = true;
+      
+      // Check if we're actually behind cover relative to the target
+      const arena = this.scene.userData.arena;
+      if (arena && arena.coverSystem && this.target) {
+        this.isBehindCover = arena.coverSystem.isPositionBehindCover(
+          this.position,
+          this.target.position
+        );
+      }
       
       if (this.target) {
         const distanceToTarget = this.position.distanceTo(this.target.position);

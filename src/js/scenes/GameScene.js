@@ -26,6 +26,9 @@ export class GameScene {
     // Create arena if physics is provided
     if (this.physics) {
       this.arena = new Arena(this.scene, this.loadingManager, this.physics);
+      
+      // Store arena reference in scene for other objects to access
+      this.scene.userData.arena = this.arena;
     }
   }
   
@@ -160,17 +163,23 @@ export class GameScene {
     this.scene.add(this.targetSphere);
   }
   
+  /**
+   * Update the game scene
+   * @param {number} deltaTime - Time since last update
+   */
   update(deltaTime) {
-    // Update water
-    this.water.material.uniforms['time'].value += deltaTime;
+    // Update arena
+    if (this.arena) {
+      this.arena.update(deltaTime);
+    }
+    
+    // Update water if it exists
+    if (this.water) {
+      this.water.material.uniforms['time'].value += deltaTime;
+    }
     
     // Animate target sphere
     this.targetSphere.position.y = 1 + Math.sin(Date.now() * 0.001) * 0.5;
     this.targetSphere.rotation.y += deltaTime;
-    
-    // Update arena if it exists
-    if (this.arena) {
-      this.arena.update(deltaTime);
-    }
   }
 } 
