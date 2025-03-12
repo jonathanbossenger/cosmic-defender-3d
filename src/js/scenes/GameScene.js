@@ -2,18 +2,36 @@ import * as THREE from 'three';
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import { Arena } from './arena.js';
+import { Player } from '../player/Player.js';
+import { InputManager } from '../player/InputManager.js';
+import { HUD } from '../player/HUD.js';
 
 export class GameScene {
-  constructor(camera, loadingManager, physics) {
+  constructor(camera, loadingManager, physics, renderer) {
     this.camera = camera;
     this.loadingManager = loadingManager;
     this.physics = physics;
+    this.renderer = renderer;
     
     // Create scene
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x87ceeb); // Sky blue
     this.scene.fog = new THREE.FogExp2(0x87ceeb, 0.01);
     
+    // Game objects
+    this.player = null;
+    this.arena = null;
+    this.inputManager = null;
+    this.hud = null;
+    
+    // Initialize
+    this.init();
+  }
+  
+  /**
+   * Initialize the game scene
+   */
+  init() {
     // Add lights
     this.setupLights();
     
@@ -29,7 +47,85 @@ export class GameScene {
       
       // Store arena reference in scene for other objects to access
       this.scene.userData.arena = this.arena;
+      
+      // Initialize arena
+      this.arena.init();
     }
+    
+    // Create player
+    this.createPlayer();
+    
+    // Create input manager
+    this.createInputManager();
+  }
+  
+  /**
+   * Create player
+   */
+  createPlayer() {
+    // Create player
+    this.player = new Player(this.scene, this.physics);
+    
+    // Set initial position
+    this.player.mesh.position.set(0, 2, 0);
+    this.player.body.position.copy(this.player.mesh.position);
+    
+    // Create HUD
+    this.hud = new HUD(this.renderer.domElement.parentElement);
+    
+    // Override player's takeDamage method to update HUD
+    const originalTakeDamage = this.player.takeDamage.bind(this.player);
+    this.player.takeDamage = (amount) => {
+      originalTakeDamage(amount);
+      
+      // Update HUD
+      if (this.hud) {
+        this.hud.updateHealth(this.player.health, this.player.maxHealth);
+        this.hud.showDamageIndicator();
+      }
+    };
+    
+    // Initial HUD update
+    this.hud.updateHealth(this.player.health, this.player.maxHealth);
+  }
+  
+  /**
+   * Create input manager
+   */
+  createInputManager() {
+    // Create input manager
+    this.inputManager = new InputManager(this.renderer.domElement);
+    
+    // Set up input callbacks
+    this.inputManager.setKeyDownCallback((key) => {
+      if (this.player) {
+        this.player.handleKeyInput(key, true);
+      }
+    });
+    
+    this.inputManager.setKeyUpCallback((key) => {
+      if (this.player) {
+        this.player.handleKeyInput(key, false);
+      }
+    });
+    
+    this.inputManager.setMouseMoveCallback((deltaX, deltaY) => {
+      if (this.player) {
+        this.player.handleMouseMove(deltaX, deltaY);
+      }
+    });
+    
+    this.inputManager.setMouseDownCallback((button) => {
+      if (this.player) {
+        this.player.handleMouseButton(button, true);
+      }
+    });
+    
+    this.inputManager.setMouseUpCallback((button) => {
+      if (this.player) {
+        this.player.handleMouseButton(button, false);
+      }
+    });
   }
   
   setupLights() {
@@ -173,6 +269,16 @@ export class GameScene {
       this.arena.update(deltaTime);
     }
     
+    // Update player
+    if (this.player) {
+      this.player.update(deltaTime, this.camera);
+      
+      // Update HUD
+      if (this.hud) {
+        this.hud.updateHealth(this.player.health, this.player.maxHealth);
+      }
+    }
+    
     // Update water if it exists
     if (this.water) {
       this.water.material.uniforms['time'].value += deltaTime;
@@ -181,5 +287,60 @@ export class GameScene {
     // Animate target sphere
     this.targetSphere.position.y = 1 + Math.sin(Date.now() * 0.001) * 0.5;
     this.targetSphere.rotation.y += deltaTime;
+  }
+  
+  /**
+   * Dispose of scene resources
+   */
+  dispose() {
+    // Dispose of arena
+    if (this.arena) {
+      this.arena.dispose();
+    }
+    
+    // Dispose of player
+    if (this.player) {
+      this.player.dispose();
+    }
+    
+    // Dispose of input manager
+    if (this.inputManager) {
+      this.inputManager.dispose();
+    }
+    
+    // Dispose of HUD
+    if (this.hud) {
+      this.hud.dispose();
+    }
+    
+    // Dispose of water
+    if (this.water) {
+      this.water.material.dispose();
+      this.water.geometry.dispose();
+    }
+    
+    // Dispose of skybox
+    if (this.sky) {
+      this.sky.material.dispose();
+      this.sky.geometry.dispose();
+    }
+    
+    // Clear scene
+    while (this.scene.children.length > 0) {
+      const object = this.scene.children[0];
+      this.scene.remove(object);
+      
+      if (object.geometry) {
+        object.geometry.dispose();
+      }
+      
+      if (object.material) {
+        if (Array.isArray(object.material)) {
+          object.material.forEach(material => material.dispose());
+        } else {
+          object.material.dispose();
+        }
+      }
+    }
   }
 } 
