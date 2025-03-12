@@ -41,15 +41,21 @@ export class GameScene {
     // Add objects
     this.setupObjects();
     
-    // Create arena if physics is provided
-    if (this.physics) {
-      this.arena = new Arena(this.scene, this.loadingManager, this.physics);
-      
-      // Store arena reference in scene for other objects to access
-      this.scene.userData.arena = this.arena;
-      
-      // Initialize arena
-      this.arena.init();
+    // Create arena if physics is provided and properly initialized
+    if (this.physics && this.physics.world) {
+      try {
+        this.arena = new Arena(this.scene, this.loadingManager, this.physics);
+        
+        // Store arena reference in scene for other objects to access
+        this.scene.userData.arena = this.arena;
+        
+        // Initialize arena
+        this.arena.init();
+      } catch (error) {
+        console.error('Failed to initialize arena:', error);
+      }
+    } else {
+      console.warn('Physics not initialized, skipping arena creation');
     }
     
     // Create player
@@ -63,30 +69,41 @@ export class GameScene {
    * Create player
    */
   createPlayer() {
-    // Create player
-    this.player = new Player(this.scene, this.physics);
-    
-    // Set initial position
-    this.player.mesh.position.set(0, 2, 0);
-    this.player.body.position.copy(this.player.mesh.position);
-    
-    // Create HUD
-    this.hud = new HUD(this.renderer.domElement.parentElement);
-    
-    // Override player's takeDamage method to update HUD
-    const originalTakeDamage = this.player.takeDamage.bind(this.player);
-    this.player.takeDamage = (amount) => {
-      originalTakeDamage(amount);
-      
-      // Update HUD
-      if (this.hud) {
-        this.hud.updateHealth(this.player.health, this.player.maxHealth);
-        this.hud.showDamageIndicator();
+    try {
+      // Check if physics is properly initialized
+      if (!this.physics || !this.physics.world) {
+        console.warn('Physics not initialized, creating player without physics');
+        // You might want to implement a non-physics fallback here
+        return;
       }
-    };
-    
-    // Initial HUD update
-    this.hud.updateHealth(this.player.health, this.player.maxHealth);
+      
+      // Create player
+      this.player = new Player(this.scene, this.physics);
+      
+      // Set initial position
+      this.player.mesh.position.set(0, 2, 0);
+      this.player.body.position.copy(this.player.mesh.position);
+      
+      // Create HUD
+      this.hud = new HUD(this.renderer.domElement.parentElement);
+      
+      // Override player's takeDamage method to update HUD
+      const originalTakeDamage = this.player.takeDamage.bind(this.player);
+      this.player.takeDamage = (amount) => {
+        originalTakeDamage(amount);
+        
+        // Update HUD
+        if (this.hud) {
+          this.hud.updateHealth(this.player.health, this.player.maxHealth);
+          this.hud.showDamageIndicator();
+        }
+      };
+      
+      // Initial HUD update
+      this.hud.updateHealth(this.player.health, this.player.maxHealth);
+    } catch (error) {
+      console.error('Failed to create player:', error);
+    }
   }
   
   /**
@@ -191,14 +208,12 @@ export class GameScene {
     // Water
     const waterGeometry = new THREE.PlaneGeometry(100, 100);
     
-    // Use the TextureLoader from our custom LoadingManager
-    const textureLoader = this.loadingManager.createTextureLoader();
-    const waterNormals = textureLoader.load(
-      'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/waternormals.jpg',
-      function (texture) {
-        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-      }
-    );
+    // Get water normal texture from loading manager
+    const waterNormals = this.loadingManager.getTexture('waterNormals');
+    if (!waterNormals) {
+      console.error('Water normals texture not loaded!');
+      return;
+    }
     
     this.water = new Water(waterGeometry, {
       textureWidth: 512,

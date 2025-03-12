@@ -162,7 +162,7 @@ export class Arena {
     
     // Add platform to physics world
     if (this.physics) {
-      const platformBody = this.physics.addBox(
+      const platformBody = this.physics.helper.addBox(
         this.platform.position,
         { width: this.platformSize, height: this.platformHeight, depth: this.platformSize },
         { mass: 0, restitution: 0.3 }
@@ -273,23 +273,22 @@ export class Arena {
    */
   createFloor() {
     // Create floor geometry
-    const geometry = new THREE.PlaneGeometry(this.size * 3, this.size * 3, 32, 32);
+    const geometry = new THREE.PlaneGeometry(this.size, this.size);
     
     // Create floor mesh
     this.floor = new THREE.Mesh(geometry, this.materials.floor);
     this.floor.rotation.x = -Math.PI / 2;
-    this.floor.position.y = -this.platformHeight - 0.1; // Slightly below platform
     this.floor.receiveShadow = true;
     
     // Add floor to scene
     this.scene.add(this.floor);
     
     // Add floor to physics world
-    if (this.physics) {
-      const floorBody = this.physics.addPlane(
-        this.floor.position,
-        { normal: new THREE.Vector3(0, 1, 0) },
-        { mass: 0, restitution: 0.3 }
+    if (this.physics && this.physics.helper) {
+      const floorBody = this.physics.helper.addPlane(
+        { x: 0, y: 0, z: 0 },
+        { x: 0, y: 1, z: 0 },
+        { restitution: 0.3 }
       );
       this.floor.userData.physicsBody = floorBody;
     }

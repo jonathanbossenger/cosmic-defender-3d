@@ -3,29 +3,33 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 export class LoadingManager {
   constructor() {
-    console.log('LoadingManager constructor called');
-    
     // Create Three.js loading manager
-    this.manager = new THREE.LoadingManager();
+    this.threeManager = new THREE.LoadingManager();
     
-    // Store the callback
+    // Store callbacks
+    this.onProgressCallback = null;
     this.onLoadCallback = null;
     
     // Set up loading events
-    this.manager.onStart = (url, itemsLoaded, itemsTotal) => {
-      this.handleStart(url, itemsLoaded, itemsTotal);
+    this.threeManager.onStart = (url, itemsLoaded, itemsTotal) => {
+      console.log(`Started loading: ${url}`);
     };
     
-    this.manager.onProgress = (url, itemsLoaded, itemsTotal) => {
-      this.handleProgress(url, itemsLoaded, itemsTotal);
+    this.threeManager.onProgress = (url, itemsLoaded, itemsTotal) => {
+      if (typeof this.onProgressCallback === 'function') {
+        this.onProgressCallback(url, itemsLoaded, itemsTotal);
+      }
     };
     
-    this.manager.onLoad = () => {
-      this.handleLoad();
+    this.threeManager.onLoad = () => {
+      console.log('All resources loaded');
+      if (typeof this.onLoadCallback === 'function') {
+        this.onLoadCallback();
+      }
     };
     
-    this.manager.onError = (url) => {
-      this.handleError(url);
+    this.threeManager.onError = (url) => {
+      console.error(`Error loading: ${url}`);
     };
     
     // Loading state
@@ -33,57 +37,22 @@ export class LoadingManager {
     this.totalItems = 0;
     this.loadedItems = 0;
     
-    // Start loading assets in the background
-    this.startLoading();
+    // Create loaders
+    this.textureLoader = new THREE.TextureLoader(this.threeManager);
+    this.gltfLoader = new GLTFLoader(this.threeManager);
+    this.audioLoader = new THREE.AudioLoader(this.threeManager);
+    
+    // Store loaded resources
+    this.resources = {
+      textures: new Map(),
+      models: new Map(),
+      audio: new Map()
+    };
   }
   
-  handleStart(url, itemsLoaded, itemsTotal) {
-    this.isLoading = true;
-    this.totalItems = itemsTotal;
-    this.loadedItems = 0;
-    
-    console.log(`Started loading: ${url}`);
-  }
-  
-  handleProgress(url, itemsLoaded, itemsTotal) {
-    this.loadedItems = itemsLoaded;
-    this.totalItems = itemsTotal;
-    
-    // Update loading bar
-    const progress = (itemsLoaded / itemsTotal) * 100;
-    const loadingBarFill = document.getElementById('loading-bar-fill');
-    if (loadingBarFill) {
-      loadingBarFill.style.width = `${progress}%`;
-    }
-    
-    console.log(`Loading file: ${url}. Loaded ${itemsLoaded}/${itemsTotal} files.`);
-  }
-  
-  handleLoad() {
-    this.isLoading = false;
-    console.log('Loading complete!');
-    
-    // Call custom onLoad callback if defined
-    if (typeof this.onLoadCallback === 'function') {
-      console.log('Calling onLoad callback');
-      this.onLoadCallback();
-    } else {
-      console.warn('No onLoad callback defined');
-    }
-  }
-  
-  handleError(url) {
-    console.error(`Error loading: ${url}`);
-  }
-  
-  startLoading() {
-    console.log('Starting loading process');
-    
-    // Simulate loading for testing
-    setTimeout(() => {
-      console.log('Simulated loading complete, calling handleLoad');
-      this.handleLoad();
-    }, 1000);
+  // Setter for onProgress callback
+  set onProgress(callback) {
+    this.onProgressCallback = callback;
   }
   
   // Setter for onLoad callback
@@ -91,16 +60,75 @@ export class LoadingManager {
     this.onLoadCallback = callback;
   }
   
-  // Create loaders with this manager
-  createTextureLoader() {
-    return new THREE.TextureLoader(this.manager);
+  // Pass through THREE.LoadingManager methods
+  resolveURL(url) {
+    return this.threeManager.resolveURL(url);
   }
   
-  createGLTFLoader() {
-    return new GLTFLoader(this.manager);
+  itemStart(url) {
+    return this.threeManager.itemStart(url);
   }
   
-  createAudioLoader() {
-    return new THREE.AudioLoader(this.manager);
+  itemEnd(url) {
+    return this.threeManager.itemEnd(url);
+  }
+  
+  itemError(url) {
+    return this.threeManager.itemError(url);
+  }
+  
+  startLoading() {
+    console.log('Starting asset loading...');
+    this.isLoading = true;
+    
+    // Load water normal texture
+    this.loadTexture(
+      'waterNormals',
+      'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/waternormals.jpg',
+      (texture) => {
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        console.log('Water texture loaded');
+      }
+    );
+  }
+  
+  loadTexture(name, url, onLoad = null) {
+    return new Promise((resolve, reject) => {
+      this.textureLoader.load(
+        url,
+        (texture) => {
+          this.resources.textures.set(name, texture);
+          if (onLoad) onLoad(texture);
+          resolve(texture);
+        },
+        undefined,
+        (error) => {
+          console.error(`Error loading texture ${name}:`, error);
+          reject(error);
+        }
+      );
+    });
+  }
+  
+  getTexture(name) {
+    return this.resources.textures.get(name);
+  }
+  
+  // Helper methods to get loaders
+  getTextureLoader() {
+    return this.textureLoader;
+  }
+  
+  getGLTFLoader() {
+    return this.gltfLoader;
+  }
+  
+  getAudioLoader() {
+    return this.audioLoader;
+  }
+  
+  // Get the THREE.LoadingManager instance
+  getManager() {
+    return this.threeManager;
   }
 } 
