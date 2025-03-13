@@ -1,5 +1,6 @@
 {
   "name": "3d-shooter-game",
+  "homepage": "https://jonathanbossenger.github.io/cosmic-defender-3d",
   "version": "1.0.0",
   "description": "A 3D shooter game using Three.js and Vite",
   "main": "index.js",
