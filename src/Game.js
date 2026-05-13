@@ -159,6 +159,7 @@ export class Game {
     this.audio.playClick();
     this.screens.hidePause();
     this.input.requestLock(this.renderer.domElement);
+    this.input.consumeMouse(); // discard look-input accumulated while paused
     this.state = STATES.PLAYING;
     this.audio.startMusic(this.waveManager.wave);
     this.clock.getDelta(); // reset delta to avoid jump
@@ -207,8 +208,20 @@ export class Game {
 
     const dt = Math.min(this.clock.getDelta(), 0.05); // cap delta time
 
+    // Poll gamepad every frame so buttons work in menus, not just during gameplay
+    this.input.pollGamepad(dt);
+
     if (this.state === STATES.PLAYING) {
       this._updateGameplay(dt);
+    } else if (this.state === STATES.MENU) {
+      // A button → start game
+      if (this.input.consumeJump()) this._startGame();
+    } else if (this.state === STATES.PAUSED) {
+      // A button or Start button → resume
+      if (this.input.consumeJump() || this.input.consumeEsc()) this._resumeGame();
+    } else if (this.state === STATES.GAME_OVER) {
+      // A button → restart
+      if (this.input.consumeJump()) this._startGame();
     }
 
     // Always render (for menu backgrounds etc)
@@ -216,9 +229,6 @@ export class Game {
   }
 
   _updateGameplay(dt) {
-    // Poll gamepad state before processing any input this frame
-    this.input.pollGamepad(dt);
-
     // Input handling
     if (this.input.consumeEsc()) {
       this._pauseGame();

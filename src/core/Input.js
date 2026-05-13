@@ -104,7 +104,13 @@ export class Input {
     if (this._gamepadIndex === null) return;
 
     const gp = (navigator.getGamepads ? navigator.getGamepads() : [])[this._gamepadIndex];
-    if (!gp) return;
+    if (!gp) {
+      this._gamepadMoveX = 0;
+      this._gamepadMoveY = 0;
+      this._gamepadFire = false;
+      this._gamepadSprint = false;
+      return;
+    }
 
     // Left stick → movement axes (with deadzone)
     this._gamepadMoveX = _applyDeadzone(gp.axes[0] ?? 0, GAMEPAD_DEADZONE);
@@ -223,9 +229,9 @@ export class Input {
     return v;
   }
 
-  get forward()  { return this.isDown('KeyW') || this.isDown('ArrowUp')    || this._gamepadMoveY < -GAMEPAD_DEADZONE || this._gamepadDpadUp; }
-  get backward() { return this.isDown('KeyS') || this.isDown('ArrowDown')  || this._gamepadMoveY >  GAMEPAD_DEADZONE || this._gamepadDpadDown; }
-  get left()     { return this.isDown('KeyA') || this.isDown('ArrowLeft')  || this._gamepadMoveX < -GAMEPAD_DEADZONE || this._gamepadDpadLeft; }
-  get right()    { return this.isDown('KeyD') || this.isDown('ArrowRight') || this._gamepadMoveX >  GAMEPAD_DEADZONE || this._gamepadDpadRight; }
+  get forward()  { return this.isDown('KeyW') || this.isDown('ArrowUp')    || this._gamepadMoveY < 0 || this._gamepadDpadUp; }
+  get backward() { return this.isDown('KeyS') || this.isDown('ArrowDown')  || this._gamepadMoveY > 0 || this._gamepadDpadDown; }
+  get left()     { return this.isDown('KeyA') || this.isDown('ArrowLeft')  || this._gamepadMoveX < 0 || this._gamepadDpadLeft; }
+  get right()    { return this.isDown('KeyD') || this.isDown('ArrowRight') || this._gamepadMoveX > 0 || this._gamepadDpadRight; }
   get shift()    { return this.isDown('ShiftLeft') || this.isDown('ShiftRight') || this._gamepadSprint; }
 }
